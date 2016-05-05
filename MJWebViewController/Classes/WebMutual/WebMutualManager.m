@@ -318,6 +318,9 @@ static WebMutualManager *s_webMutualManager = nil;
     NSDictionary *aDic = [logInfo objectFromJSONString];
     int logType = [aDic[@"logType"] intValue];
     NSString *message = aDic[@"message"];
+    if (message.length == 0) {
+        return @NO;
+    }
     BOOL printSuccess = YES;
     // 0-Debug；1-Info；2-Trace；3-Warn；4-Error
     switch (logType) {
@@ -340,6 +343,7 @@ static WebMutualManager *s_webMutualManager = nil;
             printSuccess = NO;
             break;
     }
+    
     return [NSNumber numberWithBool:printSuccess];
 }
 
