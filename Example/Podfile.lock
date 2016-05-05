@@ -1,0 +1,36 @@
+PODS:
+  - ActionProtocol (0.1.0)
+  - DBModel (0.1.1):
+    - DBModel/DBModel (= 0.1.1)
+    - ModuleCapability (~> 0.1.1)
+  - DBModel/DBModel (0.1.1):
+    - ModuleCapability (~> 0.1.1)
+  - MJControllerManager (0.1.0):
+    - ActionProtocol
+    - ModuleCapability (~> 0.1.1)
+  - MJUtils (0.1.0):
+    - ModuleCapability (~> 0.1.1)
+  - MJWebViewController (0.1.0):
+    - ActionProtocol
+    - DBModel
+    - MJControllerManager
+    - MJUtils
+    - ModuleCapability (~> 0.1.1)
+  - ModuleCapability (0.1.1)
+
+DEPENDENCIES:
+  - MJWebViewController (from `../`)
+
+EXTERNAL SOURCES:
+  MJWebViewController:
+    :path: ../
+
+SPEC CHECKSUMS:
+  ActionProtocol: f5279c482de3abb31ea34b54a0ecfaf8d5cca561
+  DBModel: eee5d635af8f0941ebc761310eb2c0089dc78759
+  MJControllerManager: 7106ca93c0790fde9bcf8ea5043bae0d3553fa53
+  MJUtils: 8c2aa0f84c930740531c827aa7f6eb256457120b
+  MJWebViewController: e46da835d9e3db810fb0961917e7307e15bb4e42
+  ModuleCapability: c58431991173e091993386b1840082a2540f2de1
+
+COCOAPODS: 0.39.0
