@@ -1,0 +1,11 @@
+use_frameworks!
+
+target 'MJWebViewController_Example', :exclusive => true do
+  pod 'MJWebViewController', :path => '../'
+end
+
+target 'MJWebViewController_Tests', :exclusive => true do
+  pod 'MJWebViewController', :path => '../'
+
+  
+end
