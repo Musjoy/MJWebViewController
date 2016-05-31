@@ -28,6 +28,6 @@ Pod::Spec.new do |s|
   s.dependency 'MJControllerManager'
   s.dependency 'ActionProtocol'
   s.dependency 'DBModel'
-  s.dependency 'ModuleCapability', '~> 0.1.1'
+  s.dependency 'ModuleCapability', '~> 0.1.2'
   s.prefix_header_contents = '#import "ModuleCapability.h"'
 end

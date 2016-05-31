@@ -6,22 +6,16 @@
 //  Copyright © 2016年 Musjoy. All rights reserved.
 //
 
-#import <UIKit/UIKit.h>
+#import HEADER_BASE_VIEW_CONTROLLER
 #import "WebMutualManager.h"
 #import "WebExecuteModel.h"
+
 
 #ifndef kWebMutualUrlScheme
 #define kWebMutualUrlScheme @"webmutual"
 #endif
 
-#ifdef MODULE_SUB_BASE_VIEW_CONTROLLER
-#import "BaseViewController.h"
-@interface WebViewController : BaseViewController <UIWebViewDelegate, WebViewControllerDelegate>
-#else
-#import "MJBaseViewController.h"
-@interface WebViewController : MJBaseViewController <UIWebViewDelegate, WebViewControllerDelegate>
-#endif
-
+@interface WebViewController : THEBaseViewController <UIWebViewDelegate, WebViewControllerDelegate>
 
 @property (nonatomic, strong) WebMutualManager *webManager;
 @property (strong, nonatomic) IBOutlet UIWebView *webView;

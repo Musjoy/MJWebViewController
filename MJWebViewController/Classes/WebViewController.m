@@ -9,7 +9,7 @@
 #define WEB_REQUEST_TIMEOUT 30
 
 #import "WebViewController.h"
-#import "MJNavigationController.h"
+#import HEADER_NAVIGATION_CONTROLLER
 #import "Utils.h"
 #ifdef MODULE_URL_MANAGER
 #import "URLManager.h"
@@ -313,9 +313,9 @@
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
 {
     if (error.code == -1009 || error.code == -1003) {
-        [self toast:@"Netwoir Error"];
+        [self toast:@"Network Error"];
     } else {
-        [self toast:@"Netwoir Error"];
+        [self toast:@"Network Error"];
     }
     [self stopLoading];
     _webView.hidden = YES;

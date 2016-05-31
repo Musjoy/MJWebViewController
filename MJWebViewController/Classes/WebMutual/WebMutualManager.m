@@ -9,17 +9,9 @@
 #include <objc/message.h>
 #import "WebMutualManager.h"
 #import "Utils.h"
-#ifdef MODULE_SUB_CONTROLLER_MANAGER
-#import "ControllerManager.h"
-#import "NavigationController.h"
-#define THEControllerManager ControllerManager
-#define THENavController NavigationController
-#else
-#import "MJControllerManager.h"
-#import "MJNavigationController.h"
-#define THEControllerManager MJControllerManager
-#define THENavController MJNavigationController
-#endif
+#import HEADER_CONTROLLER_MANAGER
+#import HEADER_NAVIGATION_CONTROLLER
+
 #import "ActionProtocol.h"
 
 #ifdef MODULE_FILE_SOURCE
@@ -150,7 +142,7 @@ static WebMutualManager *s_webMutualManager = nil;
                     if (withoutNav && [withoutNav boolValue]) {
                         [[THEControllerManager topViewController] presentViewController:aVC animated:YES completion:nil];
                     } else {
-                        THENavController *aNavVC = [[THENavController alloc] initWithRootViewController:aVC];
+                        THENavigationController *aNavVC = [[THENavigationController alloc] initWithRootViewController:aVC];
                         [[THEControllerManager topViewController] presentViewController:aNavVC animated:YES completion:nil];
                     }
                 } else {
@@ -281,7 +273,7 @@ static WebMutualManager *s_webMutualManager = nil;
     UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:title
                                                         message:message
                                                        delegate:nil
-                                              cancelButtonTitle:@"确定"
+                                              cancelButtonTitle:@"OK"
                                               otherButtonTitles:nil];
     [alertView show];
     return @YES;
