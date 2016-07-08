@@ -168,7 +168,7 @@
     [self refreshWithUrl:self.webUrl];
 }
 
-- (BOOL)canSlipOut
+- (BOOL)canSlipOut:(UIGestureRecognizer *)gestureRecognizer
 {
     return !_hideNav;
 }
