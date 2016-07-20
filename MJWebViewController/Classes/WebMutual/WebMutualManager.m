@@ -42,7 +42,7 @@ static WebMutualManager *s_webMutualManager = nil;
     self = [super init];
     if (self)
     {
-        _dicActiveActions = getPlistFileData(@"webAction");
+        _dicActiveActions = getFileData(@"webAction");
         _dicForRequest = [[NSMutableDictionary alloc] init];
     }
     return self;
