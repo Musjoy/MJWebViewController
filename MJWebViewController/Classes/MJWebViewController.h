@@ -1,5 +1,5 @@
 //
-//  WebViewController.h
+//  MJWebViewController.h
 //  Common
 //
 //  Created by 黄磊 on 16/4/6.
@@ -15,7 +15,7 @@
 #define kWebMutualUrlScheme @"webmutual"
 #endif
 
-@interface WebViewController : THEBaseViewController <UIWebViewDelegate, WebViewControllerDelegate>
+@interface MJWebViewController : THEBaseViewController <UIWebViewDelegate, WebMutualManagerDelegate>
 
 @property (nonatomic, strong) WebMutualManager *webManager;
 @property (strong, nonatomic) IBOutlet UIWebView *webView;

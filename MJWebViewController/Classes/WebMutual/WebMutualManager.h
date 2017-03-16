@@ -22,7 +22,7 @@ typedef enum {
 } WebActionHandleMode;
 
 // 显示商户详情
-@protocol WebViewControllerDelegate <NSObject>
+@protocol WebMutualManagerDelegate <NSObject>
 
 @required
 - (UIWebView *)webView;
@@ -35,13 +35,11 @@ typedef enum {
 
 @interface WebMutualManager : NSObject
 
-@property (nonatomic, assign) id<WebViewControllerDelegate> delegate;
-
-+ (WebMutualManager *)shareInstance;
++ (WebMutualManager *)sharedInstance;
 
 - (NSNumber *)printLog:(NSString *)logInfo;
 
-- (void)handleThisRequest:(NSString *)requestId withDelegate:(id<WebViewControllerDelegate>)delegate;
+- (void)handleThisRequest:(NSString *)requestId withDelegate:(id<WebMutualManagerDelegate>)delegate;
 
 // 网页交互，平台层的回调
 - (void)callbackWithResult:(WebResultModel *)result isFinish:(BOOL)isFinish;

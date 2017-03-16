@@ -1,5 +1,5 @@
 //
-//  WebViewController.m
+//  MJWebViewController.m
 //  Common
 //
 //  Created by 黄磊 on 16/4/6.
@@ -8,13 +8,17 @@
 
 #define WEB_REQUEST_TIMEOUT 30
 
-#import "WebViewController.h"
+#import "MJWebViewController.h"
 #import HEADER_NAVIGATION_CONTROLLER
+#import HEADER_SERVER_URL
 #ifdef MODULE_URL_MANAGER
 #import "URLManager.h"
 #endif
+#ifdef MODULE_USER_MANAGER
+#import "UserManager.h"
+#endif
 
-@interface WebViewController ()
+@interface MJWebViewController ()
 
 @property (nonatomic, strong) NSMutableString *executeStr;
 @property (nonatomic, assign) BOOL isWebLoaded;
@@ -23,7 +27,7 @@
 
 @end
 
-@implementation WebViewController
+@implementation MJWebViewController
 @synthesize webUrl =_webUrl;
 @synthesize navTitle =_navTitle;
 
@@ -201,6 +205,18 @@
     NSMutableString *requestUrl = [NSMutableString stringWithString:url];
     NSMutableString *parameterStr = [NSMutableString stringWithString:@""];
     NSArray *allkeys = [parameters allKeys];
+#ifdef MODULE_USER_MANAGER
+    UserManager *theUser = [UserManager sharedInstance];
+    NSNumber *userId = [theUser getUserId];
+    if (userId) {
+        if (![parameters objectForKey:@"userId"]) {
+            [parameterStr appendFormat:@"%@=%@&", @"userId", userId];
+        }
+    }
+#endif
+#if defined(FUNCTION_WEB_NEED_BASE_HOST) && defined(kServerBaseHost)
+    [parameterStr appendFormat:@"%@=%@&", @"baseHost", kServerBaseHost];
+#endif
     for (NSString *aKey in allkeys) {
         [parameterStr appendFormat:@"%@=%@&", aKey, [parameters objectForKey:aKey]];
     }
@@ -340,7 +356,7 @@
     if ([[url scheme] isEqualToString:kWebMutualUrlScheme]) {
         NSString *requestId = [url resourceSpecifier];
          LogInfo(@"%@", requestId);
-        [[WebMutualManager shareInstance] handleThisRequest:requestId withDelegate:self];
+        [[WebMutualManager sharedInstance] handleThisRequest:requestId withDelegate:self];
         return NO;
 #ifdef MODULE_URL_MANAGER
     } else if ([[url scheme] isEqualToString:kReceiveUrlScheme]) {
@@ -352,7 +368,7 @@
 }
 
 
-#pragma mark - WebViewControllerDelegate
+#pragma mark - WebMutualManagerDelegate
 
 - (BOOL)canHandleThisRequest:(WebRequestModel *)request
 {

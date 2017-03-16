@@ -29,7 +29,7 @@ static WebMutualManager *s_webMutualManager = nil;
 
 @implementation WebMutualManager
 
-+ (WebMutualManager *)shareInstance
++ (WebMutualManager *)sharedInstance
 {
     if (s_webMutualManager == nil) {
         s_webMutualManager = [[WebMutualManager alloc] init];
@@ -48,7 +48,7 @@ static WebMutualManager *s_webMutualManager = nil;
     return self;
 }
 
-- (void)handleThisRequest:(NSString *)requestId withDelegate:(id<WebViewControllerDelegate>)delegate
+- (void)handleThisRequest:(NSString *)requestId withDelegate:(id<WebMutualManagerDelegate>)delegate
 {
     // 获取请求数据
     NSString *requestData = [self getRequestData:requestId withWebView:delegate.webView];
@@ -69,7 +69,7 @@ static WebMutualManager *s_webMutualManager = nil;
         }
         NSMutableDictionary *aDic = [[NSMutableDictionary alloc] init];
         [aDic setObject:webRequest forKey:@"webRequest"];
-        [aDic setObject:delegate forKey:@"webView"];
+        [aDic setObject:delegate forKey:@"delegate"];
         [_dicForRequest setObject:aDic forKey:webRequest.callbackId];
         LogInfo(@"Web Request Model : %d ; Handler : %@", webRequest.model, webRequest.handler);
         NSDictionary *dicModel = [_dicActiveActions objectForKey:[NSString stringWithFormat:@"%d", webRequest.model]];
@@ -170,7 +170,7 @@ static WebMutualManager *s_webMutualManager = nil;
                 // 从平台层获取数据
                 NSString *handlerClass = [dicHandler objectForKey:@"handlerClass"];
                 Class theClass = NSClassFromString(handlerClass);
-                NSObject *theHanlder = [theClass shareInstance];
+                NSObject *theHanlder = [theClass sharedInstance];
                 NSString *strAction = [dicHandler objectForKey:@"action"];
                 id dataReceive = [self dataByExecute:strAction target:theHanlder data:webRequest.jsonData];
                 NSString *returnString = @"";
@@ -207,7 +207,7 @@ static WebMutualManager *s_webMutualManager = nil;
                 } else {
                     NSString *handlerClass = [dicHandler objectForKey:@"handlerClass"];
                     Class theClass = NSClassFromString(handlerClass);
-                    NSObject *theHanlder = [theClass shareInstance];
+                    NSObject *theHanlder = [theClass sharedInstance];
                     NSString *strAction = [dicHandler objectForKey:@"action"];
                     dataReceive = [self dataByExecute:strAction target:theHanlder data:webRequest.jsonData];
                 }
@@ -390,13 +390,13 @@ static WebMutualManager *s_webMutualManager = nil;
     if (aDic == nil) {
         return;
     }
-    [self callbackWithResult:result andWebView:[aDic objectForKey:@"webView"]];
-    if (isFinish) {
+    BOOL callResult = [self callbackWithResult:result andDelegate:[aDic objectForKey:@"delegate"]];
+    if (!callResult || isFinish) {
         [_dicForRequest removeObjectForKey:result.callbackId];
     }
 }
 
-- (void)callbackWithResult:(WebResultModel *)result andWebView:(id<WebViewControllerDelegate>)delegate
+- (BOOL)callbackWithResult:(WebResultModel *)result andDelegate:(id<WebMutualManagerDelegate>)delegate
 {
     NSString *resultStr = [result toJSONString];
     resultStr = [resultStr stringByReplacingOccurrencesOfString:@"\"" withString:@"\\\""];
@@ -405,10 +405,12 @@ static WebMutualManager *s_webMutualManager = nil;
         UIWebView *aWebView = [delegate webView];
         if (aWebView) {
             [aWebView stringByEvaluatingJavaScriptFromString:js];
+            return YES;
         } else {
             LogError(@"Can not call webView when WebViewController is dealloc");
         }
     }
+    return NO;
 }
 
 
