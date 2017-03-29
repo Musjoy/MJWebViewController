@@ -50,12 +50,6 @@
     return self;
 }
 
-- (void)awakeFromNib
-{
-    self.autoLoadUrl = YES;
-    self.isDealloc = NO;
-}
-
 - (UIWebView *)webView
 {
     if (_isDealloc) {
