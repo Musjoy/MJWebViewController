@@ -127,6 +127,21 @@ static WebMutualManager *s_webMutualManager = nil;
                     [self operationSucceedWith:webRequest.callbackId];
                     return;
                 }
+                
+                // 获取弹出所依赖界面
+                UIViewController *topVC = nil;
+                if ([delegate isKindOfClass:[UIViewController class]]) {
+                    UIViewController *curVC = (UIViewController *)delegate;
+                    if ([curVC isViewShow]) {
+                        topVC = curVC;
+                    }
+                } else {
+                    topVC = [THEControllerManager topViewController];
+                }
+                if (!topVC) {
+                    [self operationFailedWith:webRequest.callbackId message:@"Open View Failed"];
+                    return;
+                }
 
                 UIViewController *aVC = [THEControllerManager getViewControllerWithName:strDisplayVC];
                 id attachData = [dicHandler objectForKey:@"attachData"];
@@ -140,19 +155,20 @@ static WebMutualManager *s_webMutualManager = nil;
                     [aVC configWithData:aDic];
                 }
                 
+                
                 // 打开方式
                 NSString *displayMode = [dicHandler objectForKey:@"displayMode"];
                 if (displayMode && [displayMode isEqualToString:@"Present"]) {
                     // 使用present的方式
                     NSNumber *withoutNav = [dicHandler objectForKey:@"withoutNav"];
                     if (withoutNav && [withoutNav boolValue]) {
-                        [[THEControllerManager topViewController] presentViewController:aVC animated:YES completion:nil];
+                        [topVC presentViewController:aVC animated:YES completion:nil];
                     } else {
                         THENavigationController *aNavVC = [[THENavigationController alloc] initWithRootViewController:aVC];
-                        [[THEControllerManager topViewController] presentViewController:aNavVC animated:YES completion:nil];
+                        [topVC presentViewController:aNavVC animated:YES completion:nil];
                     }
                 } else {
-                    [[[THEControllerManager topViewController] navigationController] pushViewController:aVC animated:YES];
+                    [[topVC navigationController] pushViewController:aVC animated:YES];
                 }
                 
                 if ([aVC respondsToSelector:@selector(setCompleteBlock:)]) {

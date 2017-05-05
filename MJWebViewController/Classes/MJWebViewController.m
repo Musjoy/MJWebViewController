@@ -285,7 +285,7 @@ static NSString *s_webMutualConfig = nil;
         NSString *aUrl = [self assembleUrl:filePath parameters:parameters];
         NSURL *theUrl = [NSURL fileURLWithPath:aUrl];
         LogTrace(@"Load Url : {%@}", theUrl);
-        [self startLoading:sLoading];
+        [self startInnerLoading:sLoading];
         [_webView loadHTMLString:content baseURL:theUrl];
     }
     
@@ -308,7 +308,7 @@ static NSString *s_webMutualConfig = nil;
     
     // 暂时注视掉缓存，等待添加清楚缓存功能后再加上
 //    [request setValue:@"needCache" forHTTPHeaderField:@"X-Cache"];
-    [self startLoading:sLoading];
+    [self startInnerLoading:sLoading];
     [_webView loadRequest:request];
 }
 
@@ -347,7 +347,7 @@ static NSString *s_webMutualConfig = nil;
         return;
     }
     _isWebLoaded = YES;
-    [self stopLoading];
+    [self stopInnerLoading];
     // 这里需要主动激活网页交互
     NSString *config = [self.class webMutualConfig];
     NSString *js = [NSString stringWithFormat:@"webMutual.activePlatform(%@)", config];
@@ -367,7 +367,7 @@ static NSString *s_webMutualConfig = nil;
         
     }
     [self toast:locString(@"Network Error")];
-    [self stopLoading];
+    [self stopInnerLoading];
     _webView.hidden = YES;
 }
 
