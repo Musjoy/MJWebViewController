@@ -13,8 +13,13 @@
 #import "WebRequestModel.h"
 #import "WebResultModel.h"
 
+#ifndef FILE_NAME_WEB_MUTUAL
+#define FILE_NAME_WEB_MUTUAL    @"web_mutual"
+#endif
+
 // web事件处理方式
 typedef enum {
+    kWebUnknown   = -1,                 // 未知模式
     kWebOpenView  = 0,                  // 在平台层打开对应界面
     kWebFetchData,                      // 从平台层获取数据
     kWebSendData,                       // 向平台层发送数据
@@ -39,7 +44,7 @@ typedef enum {
 
 - (NSNumber *)printLog:(NSString *)logInfo;
 
-- (void)handleThisRequest:(NSString *)requestId withDelegate:(id<WebMutualManagerDelegate>)delegate;
+- (void)handleThisRequest:(NSURL *)requestURL withDelegate:(id<WebMutualManagerDelegate>)delegate;
 
 // 网页交互，平台层的回调
 - (void)callbackWithResult:(WebResultModel *)result isFinish:(BOOL)isFinish;

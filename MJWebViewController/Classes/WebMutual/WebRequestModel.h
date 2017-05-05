@@ -10,9 +10,9 @@
 
 @interface WebRequestModel : DBModel
 
-@property (nonatomic, assign) int model;
-@property (nonatomic, strong) NSString *handler;
-@property (nonatomic, strong) NSString *callbackId;
+@property (nonatomic, assign) int mode;
+@property (nonatomic, strong) NSString *action;
 @property (nonatomic, strong) NSString *jsonData;
+@property (nonatomic, strong) NSString *callbackId;
 
 @end

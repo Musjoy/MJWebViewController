@@ -42,52 +42,58 @@ static WebMutualManager *s_webMutualManager = nil;
     self = [super init];
     if (self)
     {
-        _dicActiveActions = getFileData(@"webAction");
+        _dicActiveActions = getFileData(FILE_NAME_WEB_MUTUAL);
         _dicForRequest = [[NSMutableDictionary alloc] init];
     }
     return self;
 }
 
-- (void)handleThisRequest:(NSString *)requestId withDelegate:(id<WebMutualManagerDelegate>)delegate
+- (void)handleThisRequest:(NSURL *)requestURL withDelegate:(id<WebMutualManagerDelegate>)delegate
 {
     // 获取请求数据
-    NSString *requestData = [self getRequestData:requestId withWebView:delegate.webView];
-    if ([requestData length] == 0) {
-        LogError(@"Cann't get request data with request Id : %@", requestId);
+    WebRequestModel *webRequest = [self getRequestModel:requestURL withWebView:delegate.webView];
+    if (webRequest == nil) {
+        LogError(@"Cann't get request data with request : %@", requestURL);
         return;
     }
     // 解析数据
     @try {
-        WebRequestModel *webRequest = [[WebRequestModel alloc] initWithString:requestData error:nil];
-        if (webRequest == nil) {
-            return;
-        }
+        
         if (delegate && [delegate respondsToSelector:@selector(canHandleThisRequest:)]) {
             if ([delegate canHandleThisRequest:webRequest]) {
                 return;
             }
         }
-        NSMutableDictionary *aDic = [[NSMutableDictionary alloc] init];
-        [aDic setObject:webRequest forKey:@"webRequest"];
-        [aDic setObject:delegate forKey:@"delegate"];
-        [_dicForRequest setObject:aDic forKey:webRequest.callbackId];
-        LogInfo(@"Web Request Model : %d ; Handler : %@", webRequest.model, webRequest.handler);
-        NSDictionary *dicModel = [_dicActiveActions objectForKey:[NSString stringWithFormat:@"%d", webRequest.model]];
-        NSDictionary *dicHandler = [dicModel objectForKey:webRequest.handler];
-        if (webRequest.model <= kWebSendData && dicHandler == nil) {
-            // 平台未接收该接口
-            LogError(@"平台未接收该接口 : %@ ", webRequest.handler);
-            [self operationFailedWith:webRequest.callbackId message:@"Request Not Accept"];
-            return;
+        
+        if (webRequest.callbackId.length > 0) {
+            NSMutableDictionary *aDic = [[NSMutableDictionary alloc] init];
+            [aDic setObject:webRequest forKey:@"webRequest"];
+            [aDic setObject:delegate forKey:@"delegate"];
+            [_dicForRequest setObject:aDic forKey:webRequest.callbackId];
+        }
+        LogInfo(@"Web Request Mode : %d ; Action : %@", webRequest.mode, webRequest.action);
+        NSDictionary *dicModel = [_dicActiveActions objectForKey:[NSString stringWithFormat:@"%d", webRequest.mode]];
+        NSDictionary *dicHandler = [dicModel objectForKey:webRequest.action];
+        if (webRequest.mode <= kWebSendData && dicHandler == nil) {
+            // 如果是打开新的网页，这直接处理
+            if (webRequest.mode == kWebOpenView && [webRequest.action isEqualToString:@"OpenWebView"]) {
+                //
+                dicHandler = @{@"displayVC":@"MJWebViewController"};
+            } else {
+                // 平台未接收该接口
+                LogError(@"平台未接收该接口 : %@ ", webRequest.action);
+                [self operationFailedWith:webRequest.callbackId message:@"Request Not Accept"];
+                return;
+            }
         }
         
-        switch (webRequest.model)
+        switch (webRequest.mode)
         {
             case kWebOpenView:
             {
                 // 打开一个界面
                 NSString *strDisplayVC = [dicHandler objectForKey:@"displayVC"];
-                if ([webRequest.handler isEqualToString:@"BackToView"]) {
+                if ([webRequest.action isEqualToString:@"BackToView"]) {
                     // 返回上一级界面
                     NSDictionary *aDic = [webRequest.jsonData objectFromJSONString];
                     NSNumber *needRefresh = aDic[@"needRefresh"];
@@ -135,8 +141,8 @@ static WebMutualManager *s_webMutualManager = nil;
                 }
                 
                 // 打开方式
-                NSString *displayModel = [dicHandler objectForKey:@"displayModel"];
-                if (displayModel && [displayModel isEqualToString:@"Present"]) {
+                NSString *displayMode = [dicHandler objectForKey:@"displayMode"];
+                if (displayMode && [displayMode isEqualToString:@"Present"]) {
                     // 使用present的方式
                     NSNumber *withoutNav = [dicHandler objectForKey:@"withoutNav"];
                     if (withoutNav && [withoutNav boolValue]) {
@@ -199,10 +205,12 @@ static WebMutualManager *s_webMutualManager = nil;
             {
                 // 从平台层获取数据
                 id dataReceive = nil;
-                if ([webRequest.handler isEqualToString:@"SendLog"]) {
+                if ([webRequest.action isEqualToString:@"SendLog"]) {
                     [self printLog:webRequest.jsonData];
                     dataReceive = [NSNumber numberWithBool:YES];
-                    [_dicForRequest removeObjectForKey:webRequest.callbackId];
+                    if (webRequest.callbackId.length > 0) {
+                        [_dicForRequest removeObjectForKey:webRequest.callbackId];
+                    }
                     return;
                 } else {
                     NSString *handlerClass = [dicHandler objectForKey:@"handlerClass"];
@@ -220,7 +228,7 @@ static WebMutualManager *s_webMutualManager = nil;
                 break;
             }
             default:
-                LogError(@"平台未接收该模式 : %d ", webRequest.model);
+                LogError(@"平台未接收该模式 : %d ", webRequest.mode);
                 [self operationFailedWith:webRequest.callbackId message:@"Request Not Accept"];
                 break;
         } ;
@@ -237,11 +245,45 @@ static WebMutualManager *s_webMutualManager = nil;
     }
 }
 
-- (NSString *)getRequestData:(NSString *)requestId withWebView:(UIWebView *)webView
+- (WebRequestModel *)getRequestModel:(NSURL *)requestURL withWebView:(UIWebView *)webView
 {
-    NSString *js = [NSString stringWithFormat:@"webMutual.getRequestData(\'%@\')", requestId];
-    NSString* requestData = [webView stringByEvaluatingJavaScriptFromString:js];
-    return requestData;
+    WebRequestModel *webRequest = nil;
+    
+    NSString *requestId = requestURL.resourceSpecifier;
+    NSRange range = [requestId rangeOfString:@"?"];
+    if (range.length == 0) {
+        NSString *js = [NSString stringWithFormat:@"webMutual.getRequestData(\'%@\')", requestId];
+        NSString* requestData = [webView stringByEvaluatingJavaScriptFromString:js];
+        webRequest = [[WebRequestModel alloc] initWithString:requestData error:nil];
+    } else {
+        NSString *modelStr = [requestId substringToIndex:range.location];
+        WebActionHandleMode mode = [self actionModeFromString:modelStr];
+        if (mode < 0) {
+            return nil;
+        }
+        webRequest = [[WebRequestModel alloc] init];
+        webRequest.mode = mode;
+        webRequest.action =  [requestURL getUrlParameter:@"action"];
+        webRequest.jsonData =  [[requestURL getUrlParameter:@"jsonData"] stringByRemovingPercentEncoding];
+    }
+    
+    return webRequest;
+}
+
+- (WebActionHandleMode)actionModeFromString:(NSString *)str
+{
+    if ([str isEqualToString:@"OpenView"]) {
+        return kWebOpenView;
+    } else if ([str isEqualToString:@"OpenView"]) {
+        return kWebOpenView;
+    } else if ([str isEqualToString:@"FetchData"]) {
+        return kWebFetchData;
+    } else if ([str isEqualToString:@"SendData"]) {
+        return kWebSendData;
+    } else if ([str isEqualToString:@"RegistAction"]) {
+        return kWebRegistAction;
+    }
+    return kWebUnknown;
 }
 
 - (NSDictionary *)webGetOSInfo
@@ -365,6 +407,9 @@ static WebMutualManager *s_webMutualManager = nil;
 
 - (void)operationSucceedWith:(NSString *)callbackId
 {
+    if (callbackId.length == 0) {
+        return;
+    }
     WebResultModel *webResult = [[WebResultModel alloc] init];
     webResult.isSuccess = YES;
     webResult.callbackId = callbackId;
@@ -375,6 +420,9 @@ static WebMutualManager *s_webMutualManager = nil;
 
 - (void)operationFailedWith:(NSString *)callbackId message:(NSString *)message
 {
+    if (callbackId.length == 0) {
+        return;
+    }
     WebResultModel *webResult = [[WebResultModel alloc] init];
     webResult.isSuccess = NO;
     webResult.callbackId = callbackId;

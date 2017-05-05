@@ -11,6 +11,8 @@
 #import "MJWebViewController.h"
 #import HEADER_NAVIGATION_CONTROLLER
 #import HEADER_SERVER_URL
+#import HEADER_JSON_GENERATE
+#import HEADER_LOCALIZE
 #ifdef MODULE_URL_MANAGER
 #import "URLManager.h"
 #endif
@@ -18,18 +20,40 @@
 #import "UserManager.h"
 #endif
 
+static NSString *s_webMutualConfig = nil;
+
 @interface MJWebViewController ()
 
 @property (nonatomic, strong) NSMutableString *executeStr;
 @property (nonatomic, assign) BOOL isWebLoaded;
 @property (nonatomic, strong) UIButton *btnBack;
 
+@property (nonatomic, strong) NSString *webMutualConfig;
 
 @end
 
 @implementation MJWebViewController
 @synthesize webUrl =_webUrl;
 @synthesize navTitle =_navTitle;
+
++ (NSString *)webMutualConfig
+{
+    if (s_webMutualConfig == nil) {
+        NSMutableDictionary *dic = [[NSMutableDictionary alloc] init];
+        [dic setObject:@"iOS" forKey:@"platform"];
+#ifdef kServerBaseHost
+        [dic setObject:kServerBaseHost forKey:@"baseHost"];
+#endif
+#ifdef kServerUrl
+        [dic setObject:kServerUrl forKey:@"serverUrl"];
+#endif
+#ifdef kServerAction
+        [dic setObject:kServerAction forKey:@"serverAction"];
+#endif
+        s_webMutualConfig = jsonStringFromDic(dic);
+    }
+    return s_webMutualConfig;
+}
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
@@ -194,6 +218,8 @@
 }
 
 
+#pragma mark - Private
+
 - (NSString *)assembleUrl:(NSString *)url parameters:(NSDictionary *)parameters
 {
     NSMutableString *requestUrl = [NSMutableString stringWithString:url];
@@ -312,7 +338,6 @@
 
 - (void)webViewDidStartLoad:(UIWebView *)webView
 {
-//    _isWebLoaded = YES;
     _webView.hidden = NO;
 }
 
@@ -323,7 +348,9 @@
     }
     _isWebLoaded = YES;
     [self stopLoading];
-    NSString *js = [NSString stringWithFormat:@"webMutual.activePlatform('iOS')"];
+    // 这里需要主动激活网页交互
+    NSString *config = [self.class webMutualConfig];
+    NSString *js = [NSString stringWithFormat:@"webMutual.activePlatform(%@)", config];
     [webView stringByEvaluatingJavaScriptFromString:js];
     
     if (_executeStr.length > 0) {
@@ -335,10 +362,11 @@
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
 {
     if (error.code == -1009 || error.code == -1003) {
-        [self toast:@"Network Error"];
+
     } else {
-        [self toast:@"Network Error"];
+        
     }
+    [self toast:locString(@"Network Error")];
     [self stopLoading];
     _webView.hidden = YES;
 }
@@ -346,11 +374,11 @@
 
 - (BOOL)webView:(UIWebView*)webView shouldStartLoadWithRequest:(NSURLRequest*)request navigationType:(UIWebViewNavigationType)navigationType
 {
-    NSURL* url = [request URL];
+    NSURL *url = [request URL];
     if ([[url scheme] isEqualToString:kWebMutualUrlScheme]) {
         NSString *requestId = [url resourceSpecifier];
-         LogInfo(@"%@", requestId);
-        [[WebMutualManager sharedInstance] handleThisRequest:requestId withDelegate:self];
+        LogInfo(@"%@", requestId);
+        [[WebMutualManager sharedInstance] handleThisRequest:url withDelegate:self];
         return NO;
 #ifdef MODULE_URL_MANAGER
     } else if ([[url scheme] isEqualToString:kReceiveUrlScheme]) {
