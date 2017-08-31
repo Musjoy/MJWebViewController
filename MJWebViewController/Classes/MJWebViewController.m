@@ -340,8 +340,25 @@ static NSString *s_webMutualConfig = nil;
     [self executeThisJS:str];
 }
 
-#pragma mark - Private
+#pragma mark - Loading
 
+- (NSInteger)startInnerLoading:(NSString *)loadingText
+{
+#ifdef MODULE_LOADING_VIEW
+    return [super startInnerLoading:loadingText];
+#else
+    return [self startLoading:loadingText];
+#endif
+}
+
+- (void)stopInnerLoading
+{
+#ifdef MODULE_LOADING_VIEW
+    return [super stopInnerLoading];
+#else
+    return [self stopLoading];
+#endif
+}
 
 
 #pragma mark - UIWebViewDelegate
@@ -386,8 +403,7 @@ static NSString *s_webMutualConfig = nil;
 {
     NSURL *url = [request URL];
     if ([[url scheme] isEqualToString:kWebMutualUrlScheme]) {
-        NSString *requestId = [url resourceSpecifier];
-        LogInfo(@"%@", requestId);
+        LogInfo(@"%@", [url resourceSpecifier]);
         [[WebMutualManager sharedInstance] handleThisRequest:url withDelegate:self];
         return NO;
 #ifdef MODULE_URL_MANAGER

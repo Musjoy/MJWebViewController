@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = "MJWebViewController"
-  s.version          = "0.1.1"
+  s.version          = "0.1.2"
   s.summary          = "This is a custom WebViewController."
 
   s.homepage         = "https://github.com/Musjoy/MJWebViewController"
@@ -28,6 +28,6 @@ Pod::Spec.new do |s|
   s.dependency 'MJControllerManager'
   s.dependency 'ActionProtocol'
   s.dependency 'DBModel'
-  s.dependency 'ModuleCapability', '~> 0.1.2'
+  s.dependency 'ModuleCapability'
   s.prefix_header_contents = '#import "ModuleCapability.h"'
 end
