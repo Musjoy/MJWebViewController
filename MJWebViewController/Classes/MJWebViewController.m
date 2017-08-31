@@ -160,6 +160,9 @@ static NSString *s_webMutualConfig = nil;
     // Dispose of any resources that can be recreated.
 }
 
+
+#pragma makr - Public
+
 - (void)configWithData:(id)data
 {
     NSDictionary *aDic = nil;
@@ -174,6 +177,13 @@ static NSString *s_webMutualConfig = nil;
             self.webUrl = aUrl;
         }
         NSString *aTitle = [aDic objectForKey:@"title"];
+        NSString *aTitleKey = [aDic objectForKey:@"titleKey"];
+        if (aTitleKey.length > 0) {
+            NSString *aTitleTmp = locString(aTitleKey);
+            if (![aTitleTmp isEqualToString:aTitleKey]) {
+                aTitle = aTitleTmp;
+            }
+        }
         if (aTitle) {
             self.navigationItem.title = aTitle;
         }
