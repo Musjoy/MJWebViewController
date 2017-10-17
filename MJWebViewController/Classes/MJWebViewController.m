@@ -281,12 +281,7 @@ static NSString *s_webMutualConfig = nil;
 #ifdef kServerUrl
         if (![[NSFileManager defaultManager] fileExistsAtPath:filePath]) {
             // 本地不存在，默认为服务器路径，这里可能会有些问题
-            NSString *remoteUrl = nil;
-            if ([url hasPrefix:@"/"]) {
-                remoteUrl = [kServerUrl stringByAppendingString:url];
-            } else {
-                remoteUrl = [kServerUrl stringByAppendingPathComponent:url];
-            }
+            NSString *remoteUrl = [kServerUrl stringByAppendingString:url];
             [self refreshWithUrl:[self assembleUrl:remoteUrl parameters:parameters]];
             return;
         }
