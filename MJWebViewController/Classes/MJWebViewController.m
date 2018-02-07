@@ -19,6 +19,9 @@
 #ifdef MODULE_USER_MANAGER
 #import "UserManager.h"
 #endif
+#ifdef MODULE_WEB_SERVICE
+#import <MJWebService.h>
+#endif
 
 static NSString *s_webMutualConfig = nil;
 
@@ -29,6 +32,8 @@ static NSString *s_webMutualConfig = nil;
 @property (nonatomic, strong) UIButton *btnBack;
 
 @property (nonatomic, strong) NSString *webMutualConfig;
+
+@property (nonatomic, assign) BOOL needCheckSecurity;               ///< 是否需要检查安全性
 
 @end
 
@@ -281,6 +286,8 @@ static NSString *s_webMutualConfig = nil;
 #ifdef kServerUrl
         if (![[NSFileManager defaultManager] fileExistsAtPath:filePath]) {
             // 本地不存在，默认为服务器路径，这里可能会有些问题
+            // 防止服务器路径泄露
+            _needCheckSecurity = YES;
             NSString *remoteUrl = [kServerUrl stringByAppendingString:url];
             [self refreshWithUrl:[self assembleUrl:remoteUrl parameters:parameters]];
             return;
@@ -314,6 +321,21 @@ static NSString *s_webMutualConfig = nil;
     // 暂时注视掉缓存，等待添加清楚缓存功能后再加上
 //    [request setValue:@"needCache" forHTTPHeaderField:@"X-Cache"];
     [self startInnerLoading:sLoading];
+#if defined(MODULE_WEB_SERVICE) && defined(FUN_NEED_SECURITY_REQUEST)
+    if (_needCheckSecurity) {
+        BOOL checkResult = [MJWebService checkRequestSecurity:[request.URL absoluteString] completion:^(BOOL isSucceed, NSError *err) {
+            if (isSucceed) {
+                [self refreshWithRequest:request];
+            } else {
+                [self webView:_webView didFailLoadWithError:err];
+            }
+        }];
+        if (!checkResult) {
+            return;
+        }
+    }
+#endif
+    
     [_webView loadRequest:request];
 }
 
@@ -369,6 +391,7 @@ static NSString *s_webMutualConfig = nil;
         return;
     }
     _isWebLoaded = YES;
+    _needCheckSecurity = NO;
     [self stopInnerLoading];
     // 这里需要主动激活网页交互
     NSString *config = [self.class webMutualConfig];
