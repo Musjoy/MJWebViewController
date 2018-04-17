@@ -13,14 +13,14 @@
 #import HEADER_SERVER_URL
 #import HEADER_JSON_GENERATE
 #import HEADER_LOCALIZE
-#ifdef MODULE_URL_MANAGER
+#ifdef  MODULE_URL_MANAGER
 #import "URLManager.h"
 #endif
 #ifdef MODULE_USER_MANAGER
 #import "UserManager.h"
 #endif
 #ifdef MODULE_WEB_SERVICE
-#import <MJWebService.h>
+#import <MJWebService/MJWebService.h>
 #endif
 
 static NSString *s_webMutualConfig = nil;
