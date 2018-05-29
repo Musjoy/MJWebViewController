@@ -323,16 +323,20 @@ static NSString *s_webMutualConfig = nil;
     [self startInnerLoading:sLoading];
 #if defined(MODULE_WEB_SERVICE) && defined(FUN_NEED_SECURITY_REQUEST)
     if (_needCheckSecurity) {
-        BOOL checkResult = [MJWebService checkRequestSecurity:[request.URL absoluteString] completion:^(BOOL isSucceed, NSError *err) {
-            if (isSucceed) {
-                [self refreshWithRequest:request];
-            } else {
-                [self webView:_webView didFailLoadWithError:err];
+        [MJWebService checkRequestSecurity:[request.URL absoluteString] completion:^(MJRequestSecurityState requestSecurityState, NSError *err) {
+            if (requestSecurityState != MJRequestSecurityStateUnknown) {
+                // 该请求安全性已确认，可以直接回调
+                if (requestSecurityState == MJRequestSecurityStateUnsafe) {
+                    [self webView:self->_webView didFailLoadWithError:err];
+                } else {
+                    // 这里开始实际的网络请求调用
+                    [self->_webView loadRequest:request];
+                }
+                return;
             }
+            // 这里的unknown, 也是直接失败
+            [self webView:self->_webView didFailLoadWithError:err];
         }];
-        if (!checkResult) {
-            return;
-        }
     }
 #endif
     
