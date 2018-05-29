@@ -337,6 +337,7 @@ static NSString *s_webMutualConfig = nil;
             // 这里的unknown, 也是直接失败
             [self webView:self->_webView didFailLoadWithError:err];
         }];
+        return;
     }
 #endif
     
