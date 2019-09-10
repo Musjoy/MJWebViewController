@@ -12,7 +12,7 @@
 #import HEADER_CONTROLLER_MANAGER
 #import HEADER_NAVIGATION_CONTROLLER
 
-#import "ActionProtocol.h"
+#import <ActionProtocol/ActionProtocol.h>
 
 #ifdef MODULE_FILE_SOURCE
 #import "FileSource.h"

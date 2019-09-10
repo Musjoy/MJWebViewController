@@ -6,7 +6,7 @@
 //  Copyright © 2016年 Musjoy. All rights reserved.
 //
 
-#import <ModuleCapability.h>
+#import <ModuleCapability/ModuleCapability.h>
 #import <WebKit/WebKit.h>
 #import HEADER_BASE_VIEW_CONTROLLER
 #import "WebMutualManager.h"
