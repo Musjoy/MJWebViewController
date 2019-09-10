@@ -106,11 +106,11 @@ static NSString *s_webMutualConfig = nil;
         self.webView = [[UIWebView alloc] initWithFrame:self.view.bounds];
         [self.webView setAutoresizingMask:UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth];
         [self.webView setBackgroundColor:[UIColor clearColor]];
-        [self.webView setDelegate:self];
+        [self.webView setNavigationDelegate:self];
         [self.view addSubview:self.webView];
         [self.view sendSubviewToBack:self.webView];
     } else {
-        [self.webView setDelegate:self];
+        [self.webView setNavigationDelegate:self];
     }
     
     UIScrollView *aScrollView = (UIScrollView *)[[_webView subviews] objectAtIndex:0];
@@ -216,10 +216,16 @@ static NSString *s_webMutualConfig = nil;
 {
     LogTrace(@" {Button Click} ");
     if (_hideNav && _isWebLoaded) {
-        NSString *canHandleBack = [self.webView stringByEvaluatingJavaScriptFromString:@"webMutual.platformCall('IsWebHandleBack')"];
-        if ([canHandleBack boolValue]) {
-            return;
-        }
+        [self.webView evaluateJavaScript:@"webMutual.platformCall('IsWebHandleBack')" completionHandler:^(id result, NSError * _Nullable error) {
+            if ([result boolValue]) {
+                return;
+            } else {
+                if ([self.navController back]) {
+                    _isDealloc = YES;
+                }
+            }
+        }];
+        return;
     } else {
         if ([_webView canGoBack]) {
             [_webView goBack];
@@ -314,6 +320,7 @@ static NSString *s_webMutualConfig = nil;
 
 - (void)refreshWithRequest:(NSMutableURLRequest *)request
 {
+    
     _isWebLoaded = NO;
     _executeStr = [[NSMutableString alloc] init];
     LogTrace(@"Load Url : {%@}", request);
@@ -327,18 +334,26 @@ static NSString *s_webMutualConfig = nil;
             if (requestSecurityState != MJRequestSecurityStateUnknown) {
                 // 该请求安全性已确认，可以直接回调
                 if (requestSecurityState == MJRequestSecurityStateUnsafe) {
-                    [self webView:self->_webView didFailLoadWithError:err];
+                    [self failedWithError:err];
                 } else {
-                    // 这里开始实际的网络请求调用
                     [self->_webView loadRequest:request];
                 }
                 return;
             }
             // 这里的unknown, 也是直接失败
-            [self webView:self->_webView didFailLoadWithError:err];
+            [self failedWithError:err];
         }];
         return;
     }
+#elif defined(MODULE_WEB_SERVICE) && defined(FUN_NEED_IP_AUTO_CHOOSE)
+    [MJWebService autoChooseIpWith:[request.URL absoluteString] completion:^(NSString *useIp, NSError *err) {
+        if (useIp.length == 0) {
+            [self webView:self->_webView didFailLoadWithError:err];
+            return;
+        }
+        [self updateReqeust:request withIp:useIp];
+        [self->_webView loadRequest:request];
+    }];
 #endif
     
     [_webView loadRequest:request];
@@ -351,7 +366,8 @@ static NSString *s_webMutualConfig = nil;
         [_executeStr appendString:jsSentence];
         return;
     }
-    [self.webView stringByEvaluatingJavaScriptFromString:jsSentence];
+    [self.webView evaluateJavaScript:jsSentence completionHandler:NULL];
+//    [self.webView stringByEvaluatingJavaScriptFromString:jsSentence];
 }
 
 - (void)executeThisModel:(WebExecuteModel *)executeModel
@@ -360,6 +376,19 @@ static NSString *s_webMutualConfig = nil;
     NSMutableString *jsStr = [NSMutableString stringWithString:@"webMutual.platformExecute({0})"];
     str = [jsStr stringByReplacingOccurrencesOfString:@"{0}" withString:str];
     [self executeThisJS:str];
+}
+
+- (void)updateReqeust:(NSMutableURLRequest *)request withIp:(NSString *)useIp
+{
+    if (useIp.length == 0) {
+        return;
+    }
+    NSURL *url = request.URL;
+    NSString *urlStr = url.absoluteString;
+    NSRange range = [urlStr rangeOfString:url.host];
+    NSURL *newUrl = [NSURL URLWithString:[urlStr stringByReplacingCharactersInRange:range withString:useIp]];
+    [request setURL:newUrl];
+    [request.allHTTPHeaderFields setValue:url.host forKey:@"Host"];
 }
 
 #pragma mark - Loading
@@ -383,14 +412,27 @@ static NSString *s_webMutualConfig = nil;
 }
 
 
-#pragma mark - UIWebViewDelegate
+- (void)failedWithError:(NSError *)error
+{
+    if (error.code == -1009 || error.code == -1003) {
+        
+    } else {
+        
+    }
+    [self toast:locString(@"Network Error")];
+    [self stopInnerLoading];
+    _webView.hidden = YES;
+}
 
-- (void)webViewDidStartLoad:(UIWebView *)webView
+
+#pragma mark - WKNavigationDelegate
+
+- (void)webView:(WKWebView *)webView didStartProvisionalNavigation:(WKNavigation *)navigation
 {
     _webView.hidden = NO;
 }
 
-- (void)webViewDidFinishLoad:(UIWebView *)webView
+- (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation
 {
     if (_isWebLoaded) {
         return;
@@ -401,7 +443,7 @@ static NSString *s_webMutualConfig = nil;
     // 这里需要主动激活网页交互
     NSString *config = [self.class webMutualConfig];
     NSString *js = [NSString stringWithFormat:@"webMutual.activePlatform(%@)", config];
-    [webView stringByEvaluatingJavaScriptFromString:js];
+    [webView evaluateJavaScript:js completionHandler:NULL];
     
     if (_executeStr.length > 0) {
         [self executeThisJS:_executeStr];
@@ -409,35 +451,31 @@ static NSString *s_webMutualConfig = nil;
     }
 }
 
-- (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
+-(void)webView:(WKWebView *)webView didFailProvisionalNavigation:(null_unspecified WKNavigation *)navigation withError:(nonnull NSError *)error
 {
-    if (error.code == -1009 || error.code == -1003) {
-
-    } else {
-        
-    }
-    [self toast:locString(@"Network Error")];
-    [self stopInnerLoading];
-    _webView.hidden = YES;
+    [self failedWithError:error];
 }
 
-
-- (BOOL)webView:(UIWebView*)webView shouldStartLoadWithRequest:(NSURLRequest*)request navigationType:(UIWebViewNavigationType)navigationType
+- (void)webView:(WKWebView *)webView decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler
 {
-    NSURL *url = [request URL];
+    NSURL *url =  navigationAction.request.URL;
     if ([[url scheme] isEqualToString:kWebMutualUrlScheme]) {
         LogInfo(@"%@", [url resourceSpecifier]);
         [[WebMutualManager sharedInstance] handleThisRequest:url withDelegate:self];
-        return NO;
+        decisionHandler(WKNavigationActionPolicyCancel);
 #ifdef MODULE_URL_MANAGER
     } else if ([[url scheme] isEqualToString:kReceiveUrlScheme]) {
-        return [URLManager openURL:url];
+        BOOL result = [URLManager openURL:url];
+        if (result) {
+            decisionHandler(WKNavigationActionPolicyCancel);
+        } else {
+            decisionHandler(WKNavigationActionPolicyAllow);
+        }
 #endif
     }
     LogTrace(@"Load URL : %@ ", url);
-    return YES;
+    decisionHandler(WKNavigationActionPolicyAllow);
 }
-
 
 #pragma mark - WebMutualManagerDelegate
 

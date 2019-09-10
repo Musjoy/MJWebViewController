@@ -7,6 +7,7 @@
 //
 
 #import <ModuleCapability.h>
+#import <WebKit/WebKit.h>
 #import HEADER_BASE_VIEW_CONTROLLER
 #import "WebMutualManager.h"
 #import "WebExecuteModel.h"
@@ -16,10 +17,10 @@
 #define kWebMutualUrlScheme @"webmutual"
 #endif
 
-@interface MJWebViewController : THEBaseViewController <UIWebViewDelegate, WebMutualManagerDelegate>
+@interface MJWebViewController : THEBaseViewController <WKNavigationDelegate, WebMutualManagerDelegate>
 
 @property (nonatomic, strong) WebMutualManager *webManager;
-@property (strong, nonatomic) IBOutlet UIWebView *webView;
+@property (strong, nonatomic) IBOutlet WKWebView *webView;
 @property (nonatomic, strong) NSString *webUrl;
 @property (nonatomic, strong) NSString *navTitle;
 @property (nonatomic, assign) BOOL hideNav;
