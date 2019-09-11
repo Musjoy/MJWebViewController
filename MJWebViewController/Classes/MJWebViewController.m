@@ -79,7 +79,7 @@ static NSString *s_webMutualConfig = nil;
     return self;
 }
 
-- (UIWebView *)webView
+- (WKWebView *)webView
 {
     if (_isDealloc) {
         return nil;
@@ -103,7 +103,7 @@ static NSString *s_webMutualConfig = nil;
     _executeStr = [[NSMutableString alloc] init];
     
     if (_webView == nil) {
-        self.webView = [[UIWebView alloc] initWithFrame:self.view.bounds];
+        self.webView = [[WKWebView alloc] initWithFrame:self.view.bounds];
         [self.webView setAutoresizingMask:UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth];
         [self.webView setBackgroundColor:[UIColor clearColor]];
         [self.webView setNavigationDelegate:self];
