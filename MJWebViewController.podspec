@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = "MJWebViewController"
-  s.version          = "0.1.8"
+  s.version          = "0.1.9"
   s.summary          = "This is a custom WebViewController."
 
   s.homepage         = "https://github.com/Musjoy/MJWebViewController"
