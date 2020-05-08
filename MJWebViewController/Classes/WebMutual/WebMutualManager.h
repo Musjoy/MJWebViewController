@@ -12,6 +12,7 @@
 //#import "Utils.h"
 #import "WebRequestModel.h"
 #import "WebResultModel.h"
+#import <WebKit/WebKit.h>
 
 #ifndef FILE_NAME_WEB_MUTUAL
 #define FILE_NAME_WEB_MUTUAL    @"web_mutual"
@@ -30,7 +31,7 @@ typedef enum {
 @protocol WebMutualManagerDelegate <NSObject>
 
 @required
-- (UIWebView *)webView;
+- (WKWebView *)webView;
 
 @optional
 - (BOOL)canHandleThisRequest:(WebRequestModel *)request;

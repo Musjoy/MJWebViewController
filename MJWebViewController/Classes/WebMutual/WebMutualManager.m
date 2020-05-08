@@ -261,7 +261,7 @@ static WebMutualManager *s_webMutualManager = nil;
     }
 }
 
-- (WebRequestModel *)getRequestModel:(NSURL *)requestURL withWebView:(UIWebView *)webView
+- (WebRequestModel *)getRequestModel:(NSURL *)requestURL withWebView:(WKWebView *)webView
 {
     WebRequestModel *webRequest = nil;
     
@@ -269,8 +269,10 @@ static WebMutualManager *s_webMutualManager = nil;
     NSRange range = [requestId rangeOfString:@"?"];
     if (range.length == 0) {
         NSString *js = [NSString stringWithFormat:@"webMutual.getRequestData(\'%@\')", requestId];
-        NSString* requestData = [webView stringByEvaluatingJavaScriptFromString:js];
-        webRequest = [[WebRequestModel alloc] initWithString:requestData error:nil];
+//        NSString* requestData = [webView stringByEvaluatingJavaScriptFromString:js];
+        [webView evaluateJavaScript:js completionHandler:NULL];
+
+        webRequest = [[WebRequestModel alloc] initWithString:js error:nil];
     } else {
         NSString *modelStr = [requestId substringToIndex:range.location];
         WebActionHandleMode mode = [self actionModeFromString:modelStr];
@@ -466,9 +468,10 @@ static WebMutualManager *s_webMutualManager = nil;
     resultStr = [resultStr stringByReplacingOccurrencesOfString:@"\"" withString:@"\\\""];
     NSString *js = [NSString stringWithFormat:@"webMutual.platformCallback(\'%@\')", resultStr];
     if (delegate && [delegate respondsToSelector:@selector(webView)]) {
-        UIWebView *aWebView = [delegate webView];
+        WKWebView *aWebView = [delegate webView];
         if (aWebView) {
-            [aWebView stringByEvaluatingJavaScriptFromString:js];
+//            [aWebView stringByEvaluatingJavaScriptFromString:js];
+            [aWebView evaluateJavaScript:js completionHandler:NULL];
             return YES;
         } else {
             LogError(@"Can not call webView when WebViewController is dealloc");
